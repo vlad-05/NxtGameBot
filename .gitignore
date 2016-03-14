@@ -15,12 +15,10 @@
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
-x64/
-x86/
-build/
 bld/
 [Bb]in/
 [Oo]bj/
+NxtGameBot/bin/
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -141,15 +139,6 @@ publish/
 # but database connection strings (with potential passwords) will be unencrypted
 *.pubxml
 *.publishproj
-
-# NuGet Packages
-*.nupkg
-# The packages folder can be ignored because of Package Restore
-**/packages/*
-# except build/, which is used as an MSBuild target.
-!**/packages/build/
-# Uncomment if necessary however generally it will be regenerated when needed
-#!**/packages/repositories.config
 
 # Windows Azure Build Output
 csx/
