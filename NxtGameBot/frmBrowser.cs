@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using CefSharp;
+﻿using CefSharp;
 using CefSharp.WinForms;
+using System;
+using System.Windows.Forms;
 
 namespace NxtGameBot
 {
@@ -25,7 +18,7 @@ namespace NxtGameBot
             if (!Cef.IsInitialized)
                 if (!Cef.Initialize(cefSettings))
                     return false;
-            browser = new ChromiumWebBrowser("http://www.nxtgame.com/profile");
+            browser = new ChromiumWebBrowser("about:blank");
             browser.Dock = DockStyle.Fill;
             this.Controls.Add(browser);
             return true;
