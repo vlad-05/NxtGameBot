@@ -120,14 +120,96 @@ namespace NxtGameBot
             browser.browser.Load("http://www.nxtgame.com/auth");
         }
 
-        public async Task Parse()
+        public async void next(int i)
         {
-            Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
-            List<int> matchid = new List<int>();
             double mA = 0;
             double mB = 0;
             string outputTextA;
             string outputTextB;
+            string teamwin = "";
+            string value = "";
+            HtmlDocument HD = new HtmlDocument();
+            var web = new HtmlWeb
+            {
+                AutoDetectEncoding = false,
+                OverrideEncoding = Encoding.UTF8,
+            };
+            HD = web.Load("http://www.nxtgame.com/match/details/" + matchid[i]);
+            HtmlNodeCollection bodyNodeA = HD.DocumentNode.SelectNodes("//div[@class='col-xs-6 col-md-3 text-center odds-panel-teamA']/span");
+            foreach (var hnA in bodyNodeA)
+            {
+                Invoke(new XDD(textBox1.AppendText), new string[] { "Матч " + matchid[i] + ": " });
+                outputTextA = hnA.InnerText.Trim();
+                mA = Convert.ToDouble(outputTextA.Replace(".", ","));
+                Invoke(new XDD(textBox1.AppendText), new string[] { mA.ToString() });
+            }
+            HtmlNodeCollection bodyNodeB = HD.DocumentNode.SelectNodes("//div[@class='col-xs-6 col-md-3 text-center odds-panel-teamB']/span");
+            foreach (var hnB in bodyNodeB)
+            {
+                Invoke(new XDD(textBox1.AppendText), new string[] { " vs " });
+                outputTextB = hnB.InnerText.Trim();
+                mB = Convert.ToDouble(outputTextB.Replace(".", ","));
+                Invoke(new XDD(textBox1.AppendText), new string[] { mB.ToString() });
+            }
+            if (mA > mB)
+            {
+                teamwin = " -> Команда Б";
+                value = "3";
+            }
+            if (mA < mB)
+            {
+                teamwin = " -> Команда А";
+                value = "1";
+            }
+            if (mA == mB)
+            {
+                teamwin = " -> Ничья";
+                value = "2";
+            }
+            Invoke(new XDD(textBox1.AppendText), new string[] { teamwin });
+            string urlmatch = "http://www.nxtgame.com/prediction/action?action=add&matchid=" + matchid[i] + "&value=" + value;
+            browser.browser.Load(urlmatch);
+            EventHandler<LoadingStateChangedEventArgs> l = null;
+            l = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
+            {
+                if (!(y as LoadingStateChangedEventArgs).IsLoading)
+                    if (browser.browser.Address.Contains(urlmatch))
+                    {
+                        browser.browser.LoadingStateChanged -= l;
+                        string json = await browser.browser.GetTextAsync();
+                        JObject o = JObject.Parse(json);
+                        string message = (string)o["message"];
+                        if (message == "This match has already started.")
+                        {
+                            message = "Этот матч уже начался.";
+                        }
+                        if (message == "1")
+                        {
+                            message = ". Вступил.";
+                        }
+                        Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + "\r\n" });
+                        if (i < matchid.Count - 1)
+                        {
+                            next(++i);
+                        }
+                        else if (i >= matchid.Count - 1)
+                        {
+                            Invoke(new XDD(textBox1.AppendText), new string[] { "Готово" });
+                            Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
+                            started = false;
+                        }
+                    }
+            });
+            browser.browser.LoadingStateChanged += l;
+            HD.LoadHtml(await browser.browser.GetSourceAsync());
+        }
+
+        List<int> matchid;
+
+        public async Task Parse()
+        {
+            Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
+            matchid = new List<int>();
             HtmlDocument HD = new HtmlDocument();
             var web = new HtmlWeb
             {
@@ -141,79 +223,8 @@ namespace NxtGameBot
                 matchid.Add(Convert.ToInt32(hn.Attributes["id"].Value));
             Invoke(new XDD(textBox1.AppendText), new string[] { "Всего матчей: " + matchid.Count });
             Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
-            HtmlDocument HD1 = new HtmlDocument();
-            var web1 = new HtmlWeb
-            {
-                AutoDetectEncoding = false,
-                OverrideEncoding = Encoding.UTF8,
-            };
-            for (int i = 0; i <= matchid.Count - 1; i++)
-            {
-                string teamwin = "";
-                string value = "";
-                HD1 = web.Load("http://www.nxtgame.com/match/details/" + matchid[i]);
-                HtmlNodeCollection bodyNodeA = HD1.DocumentNode.SelectNodes("//div[@class='col-xs-6 col-md-3 text-center odds-panel-teamA']/span");
-                foreach (var hnA in bodyNodeA)
-                {
-                    Invoke(new XDD(textBox1.AppendText), new string[] { "Матч " + matchid[i] + ": " });
-                    outputTextA = hnA.InnerText.Trim();
-                    mA = Convert.ToDouble(outputTextA.Replace(".", ","));
-                    Invoke(new XDD(textBox1.AppendText), new string[] { mA.ToString() });
-                }
-                HtmlNodeCollection bodyNodeB = HD1.DocumentNode.SelectNodes("//div[@class='col-xs-6 col-md-3 text-center odds-panel-teamB']/span");
-                foreach (var hnB in bodyNodeB)
-                {
-                    Invoke(new XDD(textBox1.AppendText), new string[] { " vs " });
-                    outputTextB = hnB.InnerText.Trim();
-                    mB = Convert.ToDouble(outputTextB.Replace(".", ","));
-                    Invoke(new XDD(textBox1.AppendText), new string[] { mB.ToString() });
-                }
-                if (mA > mB)
-                {
-                    teamwin = " -> Команда Б";
-                    value = "3";
-                }
-                if (mA < mB)
-                {
-                    teamwin = " -> Команда А";
-                    value = "1";
-                }
-                if (mA == mB)
-                {
-                    teamwin = " -> Ничья";
-                    value = "2";
-                }
-                Invoke(new XDD(textBox1.AppendText), new string[] { teamwin });
-                string urlmatch = "http://www.nxtgame.com/prediction/action?action=add&matchid=" + matchid[i] + "&value=" + value;
-                browser.browser.Load(urlmatch);
-                EventHandler<LoadingStateChangedEventArgs> l = null;
-                l = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
-                {
-                    if (!(y as LoadingStateChangedEventArgs).IsLoading)
-                        if (browser.browser.Address.Contains(urlmatch))
-                        {
-                            browser.browser.LoadingStateChanged -= l;
-                            string json = await browser.browser.GetTextAsync();
-                            JObject o = JObject.Parse(json);
-                            string message = (string)o["message"];
-                            if (message == "This match has already started.")
-                            {
-                                message = "Этот матч уже начался.";
-                            }
-                            if (message == "1")
-                            {
-                                message = ". Вступил.";
-                            }
-                            Invoke(new XDD(textBox1.AppendText), new string[] { " " + message });
-                        }
-                });
-                browser.browser.LoadingStateChanged += l;
-                HD.LoadHtml(await browser.browser.GetSourceAsync());
-                Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
-            }
-            Invoke(new XDD(textBox1.AppendText), new string[] { "Готово" });
-            Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
-            started = false;
+
+            next(0);
         }
 
         static bool started = false;
