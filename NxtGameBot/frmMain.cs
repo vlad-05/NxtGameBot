@@ -3,17 +3,12 @@ using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
-using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using HtmlDocument = HtmlAgilityPack.HtmlDocument;
-
 
 namespace NxtGameBot
 {
@@ -26,8 +21,7 @@ namespace NxtGameBot
             try
             {
                 browser.browser.Load("http://www.nxtgame.com/profile");
-                textBox1.AppendText("Загрузка данных профиля...");
-                textBox1.AppendText(Environment.NewLine);
+                textBox1.AppendText( "Загрузка данных профиля..." + Environment.NewLine );
                 EventHandler<LoadingStateChangedEventArgs> avatar = null;
                 avatar = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
                 {
@@ -62,6 +56,7 @@ namespace NxtGameBot
                                 {
                                     label1.Text = xy;
                                 }), new string[] { nickname });
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "Данные профиля успешно получены." + Environment.NewLine });
                                 Invoke(new XD(() =>
                                 {
                                     button2.Enabled = true;
@@ -73,8 +68,7 @@ namespace NxtGameBot
                         else
                         {
                             browser.browser.LoadingStateChanged -= avatar;
-                            Invoke(new XDD(textBox1.AppendText), new string[] { "Вы не вошли. Войдите." });
-                            Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
+                            Invoke(new XDD(textBox1.AppendText), new string[] { "Старт невозможен. Вы не авторизованы." + Environment.NewLine });
                         }
                 });
 
@@ -93,7 +87,7 @@ namespace NxtGameBot
             browser.Hide();
             InitializeComponent();
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-            label2.Text = string.Format("ver.: {0}.{1} (build {2})", version.Major, version.Minor, version.Build);
+            label2.Text = string.Format("v.: {0}.{1} (build {2})", version.Major, version.Minor, version.Build);
             GetProfile();
         }
 
@@ -153,18 +147,18 @@ namespace NxtGameBot
             }
             if (mA > mB)
             {
-                teamwin = " -> Команда Б";
+                teamwin = " -> Команда Б ->";
                 value = "3";
             }
             if (mA < mB)
             {
-                teamwin = " -> Команда А";
+                teamwin = " -> Команда А ->";
                 value = "1";
             }
             if (mA == mB)
             {
-                teamwin = " -> Ничья";
-                value = "2";
+                teamwin = " -> Ничья ->";
+                value = "1";
             }
             Invoke(new XDD(textBox1.AppendText), new string[] { teamwin });
             string urlmatch = "http://www.nxtgame.com/prediction/action?action=add&matchid=" + matchid[i] + "&value=" + value;
@@ -185,17 +179,20 @@ namespace NxtGameBot
                         }
                         if (message == "1")
                         {
-                            message = ". Вступил.";
+                            message = "Прогноз сделан.";
                         }
-                        Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + "\r\n" });
+                        if (message == "Prediction is offline.")
+                        {
+                            message = "Прогнозы отключены.";
+                        }
+                        Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + Environment.NewLine });
                         if (i < matchid.Count - 1)
                         {
                             next(++i);
                         }
                         else if (i >= matchid.Count - 1)
                         {
-                            Invoke(new XDD(textBox1.AppendText), new string[] { "Готово" });
-                            Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
+                            Invoke(new XDD(textBox1.AppendText), new string[] { "Готово. Все прогнозы сделаны." + Environment.NewLine });
                             started = false;
                         }
                     }
@@ -208,7 +205,6 @@ namespace NxtGameBot
 
         public async Task Parse()
         {
-            Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
             matchid = new List<int>();
             HtmlDocument HD = new HtmlDocument();
             var web = new HtmlWeb
@@ -221,9 +217,7 @@ namespace NxtGameBot
             HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='panel-body']/a");
             foreach (var hn in bodyNode)
                 matchid.Add(Convert.ToInt32(hn.Attributes["id"].Value));
-            Invoke(new XDD(textBox1.AppendText), new string[] { "Всего матчей: " + matchid.Count });
-            Invoke(new XDD(textBox1.AppendText), new string[] { Environment.NewLine });
-
+            Invoke(new XDD(textBox1.AppendText), new string[] { "Матчи успешно получены. Всего матчей: " + matchid.Count + Environment.NewLine });
             next(0);
         }
 
@@ -231,7 +225,7 @@ namespace NxtGameBot
 
         private void button2_Click(object sender, EventArgs e)
         {
-            textBox1.AppendText("Получение списка матчей...");
+            textBox1.AppendText( "Получение списка матчей..." + Environment.NewLine );
             browser.browser.Load("http://www.nxtgame.com/?sports=0");
             EventHandler<LoadingStateChangedEventArgs> loading = null;
             loading = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
@@ -261,11 +255,9 @@ namespace NxtGameBot
             //string fileName = "NGB.zip", myStringWebResource = null;
             //WebClient myWebClient = new WebClient();
             //myStringWebResource = remoteUri + fileName;
-            //textBox1.AppendText("Загрузка новой версии... ");
-            //textBox1.AppendText(Environment.NewLine);
+            //textBox1.AppendText( "Загрузка новой версии... " + Environment.NewLine );
             //myWebClient.DownloadFile(myStringWebResource, fileName);
-            //textBox1.AppendText("Загрузка звершена.");
-            //textBox1.AppendText(Environment.NewLine);
+            //textBox1.AppendText( "Загрузка завершена." + Environment.NewLine );
         }
     }
 }
