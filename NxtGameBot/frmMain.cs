@@ -21,7 +21,7 @@ namespace NxtGameBot
             try
             {
                 browser.browser.Load("http://www.nxtgame.com/profile");
-                textBox1.AppendText( "Загрузка данных профиля..." + Environment.NewLine );
+                textBox1.AppendText("Загрузка данных профиля..." + Environment.NewLine);
                 EventHandler<LoadingStateChangedEventArgs> avatar = null;
                 avatar = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
                 {
@@ -69,6 +69,10 @@ namespace NxtGameBot
                         {
                             browser.browser.LoadingStateChanged -= avatar;
                             Invoke(new XDD(textBox1.AppendText), new string[] { "Старт невозможен. Вы не авторизованы." + Environment.NewLine });
+                            Invoke(new XD(() =>
+                            {
+                                button1.Enabled = true;
+                            }));
                         }
                 });
 
@@ -185,7 +189,7 @@ namespace NxtGameBot
                         {
                             message = "Прогнозы отключены.";
                         }
-						if (message == "This match is already done.")
+                        if (message == "This match is already done.")
                         {
                             message = "Этот матч уже прошел.";
                         }
@@ -229,7 +233,7 @@ namespace NxtGameBot
 
         private void button2_Click(object sender, EventArgs e)
         {
-            textBox1.AppendText( "Получение списка матчей..." + Environment.NewLine );
+            textBox1.AppendText("Получение списка матчей..." + Environment.NewLine);
             browser.browser.Load("http://www.nxtgame.com/?sports=0");
             EventHandler<LoadingStateChangedEventArgs> loading = null;
             loading = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
