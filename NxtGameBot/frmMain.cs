@@ -193,6 +193,10 @@ namespace NxtGameBot
                         {
                             message = "Этот матч уже прошел.";
                         }
+						if (message == "This match has been cancelled.")
+                        {
+                            message = "Этот матч был отменен.";
+                        }
                         Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + Environment.NewLine });
                         if (i < matchid.Count - 1)
                         {
