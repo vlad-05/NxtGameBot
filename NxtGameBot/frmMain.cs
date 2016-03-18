@@ -185,6 +185,10 @@ namespace NxtGameBot
                         {
                             message = "Прогнозы отключены.";
                         }
+						if (message == "This match is already done.")
+                        {
+                            message = "Этот матч уже прошел.";
+                        }
                         Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + Environment.NewLine });
                         if (i < matchid.Count - 1)
                         {
