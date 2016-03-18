@@ -13,7 +13,7 @@ namespace NxtGameBot
         {
             CefSettings cefSettings = new CefSettings
             {
-                CachePath = Environment.CurrentDirectory + "/Cache",
+                CachePath = Environment.CurrentDirectory + "/cache",
             };
             if (!Cef.IsInitialized)
                 if (!Cef.Initialize(cefSettings))
