@@ -118,7 +118,7 @@ namespace NxtGameBot
             browser.browser.Load("http://www.nxtgame.com/auth");
         }
 
-        public async void next(int i)
+        public async void predict(int i)
         {
             double mA = 0;
             double mB = 0;
@@ -193,14 +193,14 @@ namespace NxtGameBot
                         {
                             message = "Этот матч уже прошел.";
                         }
-						if (message == "This match has been cancelled.")
+                        if (message == "This match has been cancelled.")
                         {
                             message = "Этот матч был отменен.";
                         }
                         Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + Environment.NewLine });
                         if (i < matchid.Count - 1)
                         {
-                            next(++i);
+                            predict(++i);
                         }
                         else if (i >= matchid.Count - 1)
                         {
@@ -214,8 +214,9 @@ namespace NxtGameBot
         }
 
         List<int> matchid;
+        List<string> items;
 
-        public async Task Parse()
+        public async Task ParseMatch()
         {
             matchid = new List<int>();
             HtmlDocument HD = new HtmlDocument();
@@ -230,15 +231,51 @@ namespace NxtGameBot
             foreach (var hn in bodyNode)
                 matchid.Add(Convert.ToInt32(hn.Attributes["id"].Value));
             Invoke(new XDD(textBox1.AppendText), new string[] { "Матчи успешно получены. Всего матчей: " + matchid.Count + Environment.NewLine });
-            next(0);
+            predict(0);
+        }
+
+        public void ParseItems()
+        {
+            Invoke(new XDD(textBox1.AppendText), new string[] { "Получение списка вещей..." + Environment.NewLine });
+            browser.browser.Load("http://www.nxtgame.com/my-inventory");
+            EventHandler<LoadingStateChangedEventArgs> loading = null;
+            loading = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
+            {
+                if (!(y as LoadingStateChangedEventArgs).IsLoading)
+                    if (browser.browser.Address.Contains("http://www.nxtgame.com/my-inventory"))
+                    {
+                        browser.browser.LoadingStateChanged -= loading;
+                        if (!started)
+                        {
+                            items = new List<string>();
+                            HtmlDocument HD = new HtmlDocument();
+                            var web = new HtmlWeb
+                            {
+                                AutoDetectEncoding = false,
+                                OverrideEncoding = Encoding.UTF8,
+                            };
+                            HD = new HtmlDocument();
+                            HD.LoadHtml(await browser.browser.GetSourceAsync());
+                            HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='trade-items ']/img");
+                            foreach (var hn in bodyNode)
+                            {
+                                items.Add(hn.Attributes["src"].Value);
+                            }
+                            Invoke(new XDD(textBox1.AppendText), new string[] { "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
+                            Invoke(new XDD(textBox1.AppendText), new string[] { "Получение списка матчей..." + Environment.NewLine });
+                            browser.browser.Load("http://www.nxtgame.com/?sports=0");
+                        }
+                    }
+            });
+            browser.browser.LoadingStateChanged += loading;
         }
 
         static bool started = false;
 
         private void button2_Click(object sender, EventArgs e)
         {
-            textBox1.AppendText("Получение списка матчей..." + Environment.NewLine);
-            browser.browser.Load("http://www.nxtgame.com/?sports=0");
+            //textBox1.AppendText("Получение списка матчей..." + Environment.NewLine);
+            //browser.browser.Load("http://www.nxtgame.com/?sports=0");
             EventHandler<LoadingStateChangedEventArgs> loading = null;
             loading = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
             {
@@ -249,11 +286,12 @@ namespace NxtGameBot
                         if (!started)
                         {
                             started = true;
-                            await Parse();
+                            await ParseMatch();
                         }
                     }
             });
             browser.browser.LoadingStateChanged += loading;
+            ParseItems();
         }
 
         private void button4_Click(object sender, EventArgs e)
