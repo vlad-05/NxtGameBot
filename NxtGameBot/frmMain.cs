@@ -247,23 +247,32 @@ namespace NxtGameBot
                         browser.browser.LoadingStateChanged -= loading;
                         if (!started)
                         {
-                            items = new List<string>();
-                            HtmlDocument HD = new HtmlDocument();
-                            var web = new HtmlWeb
+                            try
                             {
-                                AutoDetectEncoding = false,
-                                OverrideEncoding = Encoding.UTF8,
-                            };
-                            HD = new HtmlDocument();
-                            HD.LoadHtml(await browser.browser.GetSourceAsync());
-                            HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='trade-items ']/img");
-                            foreach (var hn in bodyNode)
-                            {
-                                items.Add(hn.Attributes["src"].Value);
+                                items = new List<string>();
+                                HtmlDocument HD = new HtmlDocument();
+                                var web = new HtmlWeb
+                                {
+                                    AutoDetectEncoding = false,
+                                    OverrideEncoding = Encoding.UTF8,
+                                };
+                                HD = new HtmlDocument();
+                                HD.LoadHtml(await browser.browser.GetSourceAsync());
+                                HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='trade-items ']/img");
+                                foreach (var hn in bodyNode)
+                                {
+                                    items.Add(hn.Attributes["src"].Value);
+                                }
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "Получение списка матчей..." + Environment.NewLine });
+                                browser.browser.Load("http://www.nxtgame.com/?sports=0");
                             }
-                            Invoke(new XDD(textBox1.AppendText), new string[] { "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
-                            Invoke(new XDD(textBox1.AppendText), new string[] { "Получение списка матчей..." + Environment.NewLine });
-                            browser.browser.Load("http://www.nxtgame.com/?sports=0");
+                            catch (Exception e)
+                            {
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "Получение списка матчей..." + Environment.NewLine });
+                                browser.browser.Load("http://www.nxtgame.com/?sports=0");
+                            }
                         }
                     }
             });
