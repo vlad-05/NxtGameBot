@@ -60,6 +60,7 @@ namespace NxtGameBot
                                 Invoke(new XD(() =>
                                 {
                                     button2.Enabled = true;
+                                    button2.PerformClick();
                                 }));
                             }
                         }
