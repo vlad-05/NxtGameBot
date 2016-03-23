@@ -15,6 +15,22 @@ namespace NxtGameBot
     public partial class frmMain : Form
     {
         frmBrowser browser;
+        public delegate void XD();
+        public delegate void XDD(string text);
+        List<int> matchid;
+        List<string> items;
+        static bool started = false;
+
+        public frmMain()
+        {
+            browser = new frmBrowser();
+            browser.Show();
+            browser.Hide();
+            InitializeComponent();
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+            label2.Text = string.Format("v.: {0}.{1} (build {2})", version.Major, version.Minor, version.Build);
+            GetProfile();
+        }
 
         void GetProfile()
         {
@@ -85,41 +101,25 @@ namespace NxtGameBot
             }
         }
 
-        public frmMain()
+        public async Task ParseMatch()
         {
-            browser = new frmBrowser();
-            browser.Show();
-            browser.Hide();
-            InitializeComponent();
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
-            label2.Text = string.Format("v.: {0}.{1} (build {2})", version.Major, version.Minor, version.Build);
-            GetProfile();
-        }
-
-        public delegate void XD();
-        public delegate void XDD(string text);
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            EventHandler<LoadingStateChangedEventArgs> login = null;
-            login = new EventHandler<LoadingStateChangedEventArgs>((x, y) =>
+            matchid = new List<int>();
+            HtmlDocument HD = new HtmlDocument();
+            var web = new HtmlWeb
             {
-                if (!(y as LoadingStateChangedEventArgs).IsLoading)
-                {
-                    if (browser.browser.Address.Contains("http://www.nxtgame.com/"))
-                    {
-                        browser.browser.LoadingStateChanged -= login;
-                        Invoke(new XD(GetProfile));
-                        Invoke(new XD(browser.Hide));
-                    }
-                }
-            });
-            browser.browser.LoadingStateChanged += login;
-            browser.Show();
-            browser.browser.Load("http://www.nxtgame.com/auth");
+                AutoDetectEncoding = false,
+                OverrideEncoding = Encoding.UTF8,
+            };
+            HD = new HtmlDocument();
+            HD.LoadHtml(await browser.browser.GetSourceAsync());
+            HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='panel-body']/a");
+            foreach (var hn in bodyNode)
+                matchid.Add(Convert.ToInt32(hn.Attributes["id"].Value));
+            Invoke(new XDD(textBox1.AppendText), new string[] { "Матчи успешно получены. Всего матчей: " + matchid.Count + Environment.NewLine });
+            Predict(0);
         }
 
-        public async void predict(int i)
+        public async void Predict(int i)
         {
             double mA = 0;
             double mB = 0;
@@ -201,7 +201,7 @@ namespace NxtGameBot
                         Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + Environment.NewLine });
                         if (i < matchid.Count - 1)
                         {
-                            predict(++i);
+                            Predict(++i);
                         }
                         else if (i >= matchid.Count - 1)
                         {
@@ -212,27 +212,6 @@ namespace NxtGameBot
             });
             browser.browser.LoadingStateChanged += l;
             HD.LoadHtml(await browser.browser.GetSourceAsync());
-        }
-
-        List<int> matchid;
-        List<string> items;
-
-        public async Task ParseMatch()
-        {
-            matchid = new List<int>();
-            HtmlDocument HD = new HtmlDocument();
-            var web = new HtmlWeb
-            {
-                AutoDetectEncoding = false,
-                OverrideEncoding = Encoding.UTF8,
-            };
-            HD = new HtmlDocument();
-            HD.LoadHtml(await browser.browser.GetSourceAsync());
-            HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='panel-body']/a");
-            foreach (var hn in bodyNode)
-                matchid.Add(Convert.ToInt32(hn.Attributes["id"].Value));
-            Invoke(new XDD(textBox1.AppendText), new string[] { "Матчи успешно получены. Всего матчей: " + matchid.Count + Environment.NewLine });
-            predict(0);
         }
 
         public void ParseItems()
@@ -280,7 +259,25 @@ namespace NxtGameBot
             browser.browser.LoadingStateChanged += loading;
         }
 
-        static bool started = false;
+        private void button1_Click(object sender, EventArgs e)
+        {
+            EventHandler<LoadingStateChangedEventArgs> login = null;
+            login = new EventHandler<LoadingStateChangedEventArgs>((x, y) =>
+            {
+                if (!(y as LoadingStateChangedEventArgs).IsLoading)
+                {
+                    if (browser.browser.Address.Contains("http://www.nxtgame.com/"))
+                    {
+                        browser.browser.LoadingStateChanged -= login;
+                        Invoke(new XD(GetProfile));
+                        Invoke(new XD(browser.Hide));
+                    }
+                }
+            });
+            browser.browser.LoadingStateChanged += login;
+            browser.Show();
+            browser.browser.Load("http://www.nxtgame.com/auth");
+        }
 
         private void button2_Click(object sender, EventArgs e)
         {

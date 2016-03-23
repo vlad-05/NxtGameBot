@@ -9,6 +9,12 @@ namespace NxtGameBot
     {
         public ChromiumWebBrowser browser;
 
+        public frmBrowser()
+        {
+            InitializeComponent();
+            InitBrowser();
+        }
+
         bool InitBrowser()
         {
             CefSettings cefSettings = new CefSettings
@@ -22,12 +28,6 @@ namespace NxtGameBot
             browser.Dock = DockStyle.Fill;
             this.Controls.Add(browser);
             return true;
-        }
-
-        public frmBrowser()
-        {
-            InitializeComponent();
-            InitBrowser();
         }
 
         private void Browser_FormClosing(object sender, FormClosingEventArgs e)
