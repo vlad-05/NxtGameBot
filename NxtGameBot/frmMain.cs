@@ -15,6 +15,7 @@ namespace NxtGameBot
     public partial class frmMain : Form
     {
         frmBrowser browser;
+        frmSetting setting;
         public delegate void XD();
         public delegate void XDD(string text);
         List<int> matchid;
@@ -24,6 +25,7 @@ namespace NxtGameBot
         public frmMain()
         {
             browser = new frmBrowser();
+            setting = new frmSetting();
             browser.Show();
             browser.Hide();
             InitializeComponent();
@@ -73,11 +75,21 @@ namespace NxtGameBot
                                     label1.Text = xy;
                                 }), new string[] { nickname });
                                 Invoke(new XDD(textBox1.AppendText), new string[] { "Данные профиля успешно получены." + Environment.NewLine });
-                                Invoke(new XD(() =>
+                                if (Properties.Settings.Default.AutoStart == true)
                                 {
-                                    button2.Enabled = true;
-                                    button2.PerformClick();
-                                }));
+                                    Invoke(new XD(() =>
+                                    {
+                                        button2.Enabled = true;
+                                        button2.PerformClick();
+                                    }));
+                                }
+                                else
+                                {
+                                    Invoke(new XD(() =>
+                                    {
+                                        button2.Enabled = true;
+                                    }));
+                                }
                             }
                         }
                         else if (browser.browser.Address == "about:blank")
@@ -281,8 +293,8 @@ namespace NxtGameBot
 
         private void button2_Click(object sender, EventArgs e)
         {
-            //textBox1.AppendText("Получение списка матчей..." + Environment.NewLine);
-            //browser.browser.Load("http://www.nxtgame.com/?sports=0");
+            timer1.Interval = 60000 * Properties.Settings.Default.AutoStartInterval;
+            timer1.Start();
             EventHandler<LoadingStateChangedEventArgs> loading = null;
             loading = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
             {
@@ -315,6 +327,16 @@ namespace NxtGameBot
             //textBox1.AppendText( "Загрузка новой версии... " + Environment.NewLine );
             //myWebClient.DownloadFile(myStringWebResource, fileName);
             //textBox1.AppendText( "Загрузка завершена." + Environment.NewLine );
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            setting.ShowDialog();
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            button2.PerformClick();
         }
     }
 }
