@@ -39,7 +39,7 @@ namespace NxtGameBot
             try
             {
                 browser.browser.Load("http://www.nxtgame.com/profile");
-                textBox1.AppendText("Загрузка данных профиля..." + Environment.NewLine);
+                textBox1.AppendText("[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Загрузка данных профиля..." + Environment.NewLine);
                 EventHandler<LoadingStateChangedEventArgs> avatar = null;
                 avatar = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
                 {
@@ -74,7 +74,7 @@ namespace NxtGameBot
                                 {
                                     label1.Text = xy;
                                 }), new string[] { nickname });
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "Данные профиля успешно получены." + Environment.NewLine });
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Данные профиля успешно получены." + Environment.NewLine });
                                 if (Properties.Settings.Default.AutoStart == true)
                                 {
                                     Invoke(new XD(() =>
@@ -97,7 +97,7 @@ namespace NxtGameBot
                         else
                         {
                             browser.browser.LoadingStateChanged -= avatar;
-                            Invoke(new XDD(textBox1.AppendText), new string[] { "Старт невозможен. Вы не авторизованы." + Environment.NewLine });
+                            Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Старт невозможен. Вы не авторизованы." + Environment.NewLine });
                             Invoke(new XD(() =>
                             {
                                 button1.Enabled = true;
@@ -127,7 +127,7 @@ namespace NxtGameBot
             HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='panel-body']/a");
             foreach (var hn in bodyNode)
                 matchid.Add(Convert.ToInt32(hn.Attributes["id"].Value));
-            Invoke(new XDD(textBox1.AppendText), new string[] { "Матчи успешно получены. Всего матчей: " + matchid.Count + Environment.NewLine });
+            Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Матчи успешно получены. Всего матчей: " + matchid.Count + Environment.NewLine });
             Predict(0);
         }
 
@@ -149,7 +149,7 @@ namespace NxtGameBot
             HtmlNodeCollection bodyNodeA = HD.DocumentNode.SelectNodes("//div[@class='col-xs-6 col-md-3 text-center odds-panel-teamA']/span");
             foreach (var hnA in bodyNodeA)
             {
-                Invoke(new XDD(textBox1.AppendText), new string[] { "Матч " + matchid[i] + ": " });
+                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Матч " + matchid[i] + ": " });
                 outputTextA = hnA.InnerText.Trim();
                 mA = Convert.ToDouble(outputTextA.Replace(".", ","));
                 Invoke(new XDD(textBox1.AppendText), new string[] { mA.ToString() });
@@ -192,7 +192,7 @@ namespace NxtGameBot
                         string message = (string)o["message"];
                         if (message == "This match has already started.")
                         {
-                            message = "Этот матч уже начался.";
+                            message = "Матч уже начался.";
                         }
                         if (message == "1")
                         {
@@ -204,11 +204,11 @@ namespace NxtGameBot
                         }
                         if (message == "This match is already done.")
                         {
-                            message = "Этот матч уже прошел.";
+                            message = "Матч уже прошел.";
                         }
                         if (message == "This match has been cancelled.")
                         {
-                            message = "Этот матч был отменен.";
+                            message = "Матч отменен.";
                         }
                         Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + Environment.NewLine });
                         if (i < matchid.Count - 1)
@@ -217,7 +217,7 @@ namespace NxtGameBot
                         }
                         else if (i >= matchid.Count - 1)
                         {
-                            Invoke(new XDD(textBox1.AppendText), new string[] { "Готово. Все прогнозы сделаны." + Environment.NewLine });
+                            Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Готово. Все прогнозы сделаны." + Environment.NewLine });
                             started = false;
                         }
                     }
@@ -228,7 +228,7 @@ namespace NxtGameBot
 
         public void ParseItems()
         {
-            Invoke(new XDD(textBox1.AppendText), new string[] { "Получение списка вещей..." + Environment.NewLine });
+            Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка вещей..." + Environment.NewLine });
             browser.browser.Load("http://www.nxtgame.com/my-inventory");
             EventHandler<LoadingStateChangedEventArgs> loading = null;
             loading = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
@@ -255,14 +255,14 @@ namespace NxtGameBot
                                 {
                                     items.Add(hn.Attributes["src"].Value);
                                 }
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "Получение списка матчей..." + Environment.NewLine });
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка матчей..." + Environment.NewLine });
                                 browser.browser.Load("http://www.nxtgame.com/?sports=0");
                             }
                             catch (Exception e)
                             {
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "Получение списка матчей..." + Environment.NewLine });
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
+                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка матчей..." + Environment.NewLine });
                                 browser.browser.Load("http://www.nxtgame.com/?sports=0");
                             }
                         }
