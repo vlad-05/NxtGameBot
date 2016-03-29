@@ -21,6 +21,7 @@ namespace NxtGameBot
         List<int> matchid;
         List<string> items;
         static bool started = false;
+        private FormWindowState SaveFormState;
 
         public frmMain()
         {
@@ -30,7 +31,8 @@ namespace NxtGameBot
             browser.Hide();
             InitializeComponent();
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-            label2.Text = string.Format("v.: {0}.{1} (build {2})", version.Major, version.Minor, version.Build);
+            label2.Text = string.Format("v." + version.Major + "." + version.Minor + "." + version.Build);
+            notifyIcon1.Text = "NxtGameBot v." + version.Major + "." + version.Minor + "." + version.Build;
             GetProfile();
         }
 
@@ -228,6 +230,7 @@ namespace NxtGameBot
 
         public void ParseItems()
         {
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
             Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка вещей..." + Environment.NewLine });
             browser.browser.Load("http://www.nxtgame.com/my-inventory");
             EventHandler<LoadingStateChangedEventArgs> loading = null;
@@ -256,12 +259,24 @@ namespace NxtGameBot
                                     items.Add(hn.Attributes["src"].Value);
                                 }
                                 Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
+                                if (items.Count >= 0)
+                                {
+                                    notifyIcon1.BalloonTipTitle = "NxtGameBot v." + version.Major + "." + version.Minor + "." + version.Build;
+                                    notifyIcon1.BalloonTipText = "Доступно вещей для вывода: " + items.Count;
+                                    notifyIcon1.ShowBalloonTip(1000);
+                                }
                                 Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка матчей..." + Environment.NewLine });
                                 browser.browser.Load("http://www.nxtgame.com/?sports=0");
                             }
                             catch (Exception e)
                             {
                                 Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
+                                if (items.Count >= 0)
+                                {
+                                    notifyIcon1.BalloonTipTitle = "NxtGameBot v." + version.Major + "." + version.Minor + "." + version.Build;
+                                    notifyIcon1.BalloonTipText = "Доступно вещей для вывода: " + items.Count;
+                                    notifyIcon1.ShowBalloonTip(1000);
+                                }
                                 Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка матчей..." + Environment.NewLine });
                                 browser.browser.Load("http://www.nxtgame.com/?sports=0");
                             }
@@ -315,6 +330,7 @@ namespace NxtGameBot
 
         private void button4_Click(object sender, EventArgs e)
         {
+            notifyIcon1.Visible = false;
             Process.GetCurrentProcess().Kill();
         }
 
@@ -337,6 +353,42 @@ namespace NxtGameBot
         private void timer1_Tick(object sender, EventArgs e)
         {
             button2.PerformClick();
+        }
+
+        private void notifyIcon1_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                if (WindowState == FormWindowState.Normal || WindowState == FormWindowState.Maximized)//если оно развернуто
+                {
+                    SaveFormState = WindowState;
+                    WindowState = FormWindowState.Minimized;
+                    ShowInTaskbar = false;
+                }
+                else
+                {
+                    ShowInTaskbar = true;
+                    Show();
+                    WindowState = SaveFormState;
+                }
+            }
+        }
+
+        private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            notifyIcon1.Visible = false;
+        }
+
+        private void frmMain_Resize(object sender, EventArgs e)
+        {
+            if (WindowState == FormWindowState.Minimized)
+            {
+                ShowInTaskbar = false;
+            }
+            else
+            {
+                ShowInTaskbar = true;
+            }
         }
     }
 }

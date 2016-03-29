@@ -25,7 +25,7 @@ namespace NxtGameBot.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool AutoStart {
             get {
                 return ((bool)(this["AutoStart"]));
@@ -37,7 +37,7 @@ namespace NxtGameBot.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        [global::System.Configuration.DefaultSettingValueAttribute("60")]
         public int AutoStartInterval {
             get {
                 return ((int)(this["AutoStartInterval"]));
