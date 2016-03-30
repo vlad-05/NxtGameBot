@@ -22,6 +22,8 @@ namespace NxtGameBot
         List<string> items;
         static bool started = false;
         private FormWindowState SaveFormState;
+        string nickname = "";
+        string traytitle = "NxtGameBot v." + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + "." + Assembly.GetExecutingAssembly().GetName().Version.Build;
 
         public frmMain()
         {
@@ -32,7 +34,7 @@ namespace NxtGameBot
             InitializeComponent();
             var version = Assembly.GetExecutingAssembly().GetName().Version;
             label2.Text = string.Format("v." + version.Major + "." + version.Minor + "." + version.Build);
-            notifyIcon1.Text = "NxtGameBot v." + version.Major + "." + version.Minor + "." + version.Build;
+            notifyIcon1.Text = traytitle;
             GetProfile();
         }
 
@@ -52,7 +54,6 @@ namespace NxtGameBot
                             if (!started)
                             {
                                 string avatarurl = "";
-                                string nickname = "";
                                 HtmlDocument HD = new HtmlDocument();
                                 var web = new HtmlWeb
                                 {
@@ -77,6 +78,7 @@ namespace NxtGameBot
                                     label1.Text = xy;
                                 }), new string[] { nickname });
                                 Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Данные профиля успешно получены." + Environment.NewLine });
+                                notifyIcon1.Text = traytitle + " (" + nickname + ")";
                                 if (Properties.Settings.Default.AutoStart == true)
                                 {
                                     Invoke(new XD(() =>
@@ -106,7 +108,6 @@ namespace NxtGameBot
                             }));
                         }
                 });
-
                 browser.browser.LoadingStateChanged += avatar;
             }
             catch (Exception e)
@@ -230,7 +231,6 @@ namespace NxtGameBot
 
         public void ParseItems()
         {
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
             Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка вещей..." + Environment.NewLine });
             browser.browser.Load("http://www.nxtgame.com/my-inventory");
             EventHandler<LoadingStateChangedEventArgs> loading = null;
@@ -259,9 +259,9 @@ namespace NxtGameBot
                                     items.Add(hn.Attributes["src"].Value);
                                 }
                                 Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
-                                if (items.Count >= 0)
+                                if (items.Count > 0)
                                 {
-                                    notifyIcon1.BalloonTipTitle = "NxtGameBot v." + version.Major + "." + version.Minor + "." + version.Build;
+                                    notifyIcon1.BalloonTipTitle = traytitle + " (" + nickname + ")";
                                     notifyIcon1.BalloonTipText = "Доступно вещей для вывода: " + items.Count;
                                     notifyIcon1.ShowBalloonTip(1000);
                                 }
@@ -271,9 +271,9 @@ namespace NxtGameBot
                             catch (Exception e)
                             {
                                 Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
-                                if (items.Count >= 0)
+                                if (items.Count > 0)
                                 {
-                                    notifyIcon1.BalloonTipTitle = "NxtGameBot v." + version.Major + "." + version.Minor + "." + version.Build;
+                                    notifyIcon1.BalloonTipTitle = traytitle + " (" + nickname + ")";
                                     notifyIcon1.BalloonTipText = "Доступно вещей для вывода: " + items.Count;
                                     notifyIcon1.ShowBalloonTip(1000);
                                 }
