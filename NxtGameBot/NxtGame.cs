@@ -223,7 +223,7 @@ namespace NxtGameBot
 				int status = (int)o["status"];
 				if (status == 2 && response.StartsWith("<span>Retry:"))
 				{
-					message += " -> Неудалось сделать прогрноз, повторите через минуту.";
+					message += " -> Неудалось сделать прогноз, повторите через минуту.";
 				}
 				else if (response == "This match has already started.")
 				{

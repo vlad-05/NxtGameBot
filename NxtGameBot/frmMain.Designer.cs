@@ -40,14 +40,13 @@
 			this.progressBar1 = new System.Windows.Forms.ProgressBar();
 			this.label2 = new System.Windows.Forms.Label();
 			this.button5 = new System.Windows.Forms.Button();
-			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// button1
 			// 
-			this.button1.Enabled = false;
 			this.button1.Location = new System.Drawing.Point(483, 12);
 			this.button1.Name = "button1";
 			this.button1.Size = new System.Drawing.Size(75, 23);
@@ -140,11 +139,6 @@
 			this.button5.UseVisualStyleBackColor = true;
 			this.button5.Click += new System.EventHandler(this.button5_Click);
 			// 
-			// timer1
-			// 
-			this.timer1.Interval = global::NxtGameBot.Properties.Settings.Default.AutoStartInterval;
-			this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
-			// 
 			// notifyIcon1
 			// 
 			this.notifyIcon1.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Info;
@@ -152,6 +146,11 @@
 			this.notifyIcon1.Text = "NxtGameBot";
 			this.notifyIcon1.Visible = true;
 			this.notifyIcon1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseClick);
+			// 
+			// timer1
+			// 
+			this.timer1.Interval = 60;
+			this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
 			// 
 			// frmMain
 			// 
