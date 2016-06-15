@@ -46,5 +46,17 @@ namespace NxtGameBot.Properties {
                 this["AutoStartInterval"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Cookies {
+            get {
+                return ((string)(this["Cookies"]));
+            }
+            set {
+                this["Cookies"] = value;
+            }
+        }
     }
 }
