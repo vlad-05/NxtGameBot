@@ -1,10 +1,12 @@
-﻿using CefSharp;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Net;
 using System.Reflection;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,321 +16,125 @@ namespace NxtGameBot
 {
     public partial class frmMain : Form
     {
+		NxtGame nxtGame;
+
         frmBrowser browser;
-        frmSetting setting;
-        public delegate void XD();
-        public delegate void XDD(string text);
-        List<int> matchid;
-        List<string> items;
-        static bool started = false;
-        private FormWindowState SaveFormState;
-        string nickname = "";
+        frmSetting setting = new frmSetting();
+		BinaryFormatter bf = new BinaryFormatter();
+
+		private FormWindowState SaveFormState;
         string traytitle = "NxtGameBot v." + Assembly.GetExecutingAssembly().GetName().Version.Major + "." + Assembly.GetExecutingAssembly().GetName().Version.Minor + "." + Assembly.GetExecutingAssembly().GetName().Version.Build;
 
         public frmMain()
         {
-            browser = new frmBrowser();
-            setting = new frmSetting();
-            browser.Show();
-            browser.Hide();
-            InitializeComponent();
-            var version = Assembly.GetExecutingAssembly().GetName().Version;
+			InitializeComponent();
+
+			try
+			{
+				MemoryStream ms = new MemoryStream(Convert.FromBase64String(Properties.Settings.Default.Cookies));
+				List<Cookie> data = (List<Cookie>)bf.Deserialize(ms);
+				
+				nxtGame = new NxtGame(data);
+			}
+			catch(Exception)
+			{
+				nxtGame = new NxtGame(null);
+			}
+
+			nxtGame.Log += new EventHandler<string>((object lSender, string lE) =>
+			{
+				if (InvokeRequired)
+				{
+					BeginInvoke(new Action<string>(textBox1.AppendText), lE);
+				}
+				else
+				{
+					textBox1.AppendText(lE + Environment.NewLine);
+				}
+			});
+
+			var version = Assembly.GetExecutingAssembly().GetName().Version;
             label2.Text = string.Format("v." + version.Major + "." + version.Minor + "." + version.Build);
             notifyIcon1.Text = traytitle;
-            GetProfile();
-        }
+		}
 
-        void GetProfile()
-        {
-            try
-            {
-                browser.browser.Load("http://www.nxtgame.com/profile");
-                textBox1.AppendText("[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Загрузка данных профиля..." + Environment.NewLine);
-                EventHandler<LoadingStateChangedEventArgs> avatar = null;
-                avatar = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
-                {
-                    if (!(y as LoadingStateChangedEventArgs).IsLoading)
-                        if (browser.browser.Address.Contains("nxtgame.com/profile"))
-                        {
-                            browser.browser.LoadingStateChanged -= avatar;
-                            if (!started)
-                            {
-                                string avatarurl = "";
-                                HtmlDocument HD = new HtmlDocument();
-                                var web = new HtmlWeb
-                                {
-                                    AutoDetectEncoding = false,
-                                    OverrideEncoding = Encoding.UTF8,
-                                };
-                                HD = new HtmlDocument();
-                                HD.LoadHtml(await browser.browser.GetSourceAsync());
-                                HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='avatar']/img");
-                                foreach (var hn in bodyNode)
-                                {
-                                    avatarurl = hn.Attributes["src"].Value;
-                                }
-                                HtmlNodeCollection bodyNodeA = HD.DocumentNode.SelectNodes("//div[@class='profile-name']/a");
-                                foreach (var hnA in bodyNodeA)
-                                {
-                                    nickname = hnA.InnerText.Trim();
-                                }
-                                pictureBox1.Load(avatarurl);
-                                Invoke(new XDD((xy) =>
-                                {
-                                    label1.Text = xy;
-                                }), new string[] { nickname });
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Данные профиля успешно получены." + Environment.NewLine });
-                                notifyIcon1.Text = traytitle + " (" + nickname + ")";
-                                if (Properties.Settings.Default.AutoStart == true)
-                                {
-                                    Invoke(new XD(() =>
-                                    {
-                                        button2.Enabled = true;
-                                        button2.PerformClick();
-                                    }));
-                                }
-                                else
-                                {
-                                    Invoke(new XD(() =>
-                                    {
-                                        button2.Enabled = true;
-                                    }));
-                                }
-                            }
-                        }
-                        else if (browser.browser.Address == "about:blank")
-                            browser.browser.Load("http://www.nxtgame.com/profile");
-                        else
-                        {
-                            browser.browser.LoadingStateChanged -= avatar;
-                            Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Старт невозможен. Вы не авторизованы." + Environment.NewLine });
-                            Invoke(new XD(() =>
-                            {
-                                button1.Enabled = true;
-                            }));
-                        }
-                });
-                browser.browser.LoadingStateChanged += avatar;
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
-            }
-        }
+		private async void frmMain_Shown(object sender, EventArgs e)
+		{
+			UserProfile profile = await nxtGame.GetProfile();
 
-        public async Task ParseMatch()
-        {
-            matchid = new List<int>();
-            HtmlDocument HD = new HtmlDocument();
-            var web = new HtmlWeb
-            {
-                AutoDetectEncoding = false,
-                OverrideEncoding = Encoding.UTF8,
-            };
-            HD = new HtmlDocument();
-            HD.LoadHtml(await browser.browser.GetSourceAsync());
-            HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='panel-body']/a");
-            foreach (var hn in bodyNode)
-                matchid.Add(Convert.ToInt32(hn.Attributes["id"].Value));
-            Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Матчи успешно получены. Всего матчей: " + matchid.Count + Environment.NewLine });
-            Predict(0);
-        }
+			if (profile == null)
+			{
+				button2.Enabled = false;
+			}
+			else
+			{
+				label1.Text = profile.Name;
+				pictureBox1.Image = profile.Avatar;
+				button2.Enabled = true;
+			
+				int i = await nxtGame.CheckInventory();
+				
+				if (i > 0)
+				{
+					notifyIcon1.BalloonTipTitle = traytitle + " (" + label1.Text + ")";
+					notifyIcon1.BalloonTipText = "Доступно вещей для вывода: " + i;
+					notifyIcon1.ShowBalloonTip(1000);
+				}
+			}
+		}
 
-        public async void Predict(int i)
-        {
-            double mA = 0;
-            double mB = 0;
-            string outputTextA;
-            string outputTextB;
-            string teamwin = "";
-            string value = "";
-            HtmlDocument HD = new HtmlDocument();
-            var web = new HtmlWeb
-            {
-                AutoDetectEncoding = false,
-                OverrideEncoding = Encoding.UTF8,
-            };
-            HD = web.Load("http://www.nxtgame.com/match/details/" + matchid[i]);
-            HtmlNodeCollection bodyNodeA = HD.DocumentNode.SelectNodes("//div[@class='col-xs-6 col-md-3 text-center odds-panel-teamA']/span");
-            foreach (var hnA in bodyNodeA)
-            {
-                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Матч " + matchid[i] + ": " });
-                outputTextA = hnA.InnerText.Trim();
-                mA = Convert.ToDouble(outputTextA.Replace(".", ","));
-                Invoke(new XDD(textBox1.AppendText), new string[] { mA.ToString() });
-            }
-            HtmlNodeCollection bodyNodeB = HD.DocumentNode.SelectNodes("//div[@class='col-xs-6 col-md-3 text-center odds-panel-teamB']/span");
-            foreach (var hnB in bodyNodeB)
-            {
-                Invoke(new XDD(textBox1.AppendText), new string[] { " vs " });
-                outputTextB = hnB.InnerText.Trim();
-                mB = Convert.ToDouble(outputTextB.Replace(".", ","));
-                Invoke(new XDD(textBox1.AppendText), new string[] { mB.ToString() });
-            }
-            if (mA > mB)
-            {
-                teamwin = " -> Команда Б ->";
-                value = "3";
-            }
-            if (mA < mB)
-            {
-                teamwin = " -> Команда А ->";
-                value = "1";
-            }
-            if (mA == mB)
-            {
-                teamwin = " -> Ничья ->";
-                value = "1";
-            }
-            Invoke(new XDD(textBox1.AppendText), new string[] { teamwin });
-            string urlmatch = "http://www.nxtgame.com/prediction/action?action=add&matchid=" + matchid[i] + "&value=" + value;
-            browser.browser.Load(urlmatch);
-            EventHandler<LoadingStateChangedEventArgs> l = null;
-            l = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
-            {
-                if (!(y as LoadingStateChangedEventArgs).IsLoading)
-                    if (browser.browser.Address.Contains(urlmatch))
-                    {
-                        browser.browser.LoadingStateChanged -= l;
-                        string json = await browser.browser.GetTextAsync();
-                        JObject o = JObject.Parse(json);
-                        string message = (string)o["message"];
-                        if (message == "This match has already started.")
-                        {
-                            message = "Матч уже начался.";
-                        }
-                        if (message == "1")
-                        {
-                            message = "Прогноз сделан.";
-                        }
-                        if (message == "Prediction is offline.")
-                        {
-                            message = "Прогнозы отключены.";
-                        }
-                        if (message == "This match is already done.")
-                        {
-                            message = "Матч уже прошел.";
-                        }
-                        if (message == "This match has been cancelled.")
-                        {
-                            message = "Матч отменен.";
-                        }
-                        Invoke(new XDD(textBox1.AppendText), new string[] { " " + message + Environment.NewLine });
-                        if (i < matchid.Count - 1)
-                        {
-                            Predict(++i);
-                        }
-                        else if (i >= matchid.Count - 1)
-                        {
-                            Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Готово. Все прогнозы сделаны." + Environment.NewLine });
-                            started = false;
-                        }
-                    }
-            });
-            browser.browser.LoadingStateChanged += l;
-            HD.LoadHtml(await browser.browser.GetSourceAsync());
-        }
+		private void CookiesCallback(List<Cookie> cookies)
+		{
+			if (InvokeRequired)
+			{
+				BeginInvoke(new Action<List<Cookie>>(CookiesCallback), cookies);
+				return;
+			}
 
-        public void ParseItems()
-        {
-            Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка вещей..." + Environment.NewLine });
-            browser.browser.Load("http://www.nxtgame.com/my-inventory");
-            EventHandler<LoadingStateChangedEventArgs> loading = null;
-            loading = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
-            {
-                if (!(y as LoadingStateChangedEventArgs).IsLoading)
-                    if (browser.browser.Address.Contains("http://www.nxtgame.com/my-inventory"))
-                    {
-                        browser.browser.LoadingStateChanged -= loading;
-                        if (!started)
-                        {
-                            try
-                            {
-                                items = new List<string>();
-                                HtmlDocument HD = new HtmlDocument();
-                                var web = new HtmlWeb
-                                {
-                                    AutoDetectEncoding = false,
-                                    OverrideEncoding = Encoding.UTF8,
-                                };
-                                HD = new HtmlDocument();
-                                HD.LoadHtml(await browser.browser.GetSourceAsync());
-                                HtmlNodeCollection bodyNode = HD.DocumentNode.SelectNodes("//div[@class='trade-items ']/img");
-                                foreach (var hn in bodyNode)
-                                {
-                                    items.Add(hn.Attributes["src"].Value);
-                                }
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
-                                if (items.Count > 0)
-                                {
-                                    notifyIcon1.BalloonTipTitle = traytitle + " (" + nickname + ")";
-                                    notifyIcon1.BalloonTipText = "Доступно вещей для вывода: " + items.Count;
-                                    notifyIcon1.ShowBalloonTip(1000);
-                                }
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка матчей..." + Environment.NewLine });
-                                browser.browser.Load("http://www.nxtgame.com/?sports=0");
-                            }
-                            catch (Exception e)
-                            {
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Вещи успешно получены. Доступно вещей для вывода: " + items.Count + Environment.NewLine });
-                                if (items.Count > 0)
-                                {
-                                    notifyIcon1.BalloonTipTitle = traytitle + " (" + nickname + ")";
-                                    notifyIcon1.BalloonTipText = "Доступно вещей для вывода: " + items.Count;
-                                    notifyIcon1.ShowBalloonTip(1000);
-                                }
-                                Invoke(new XDD(textBox1.AppendText), new string[] { "[" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] " + "Получение списка матчей..." + Environment.NewLine });
-                                browser.browser.Load("http://www.nxtgame.com/?sports=0");
-                            }
-                        }
-                    }
-            });
-            browser.browser.LoadingStateChanged += loading;
-        }
+			browser.Close();
+
+			MemoryStream ms = new MemoryStream();
+			bf.Serialize(ms, cookies);
+			Properties.Settings.Default.Cookies = Convert.ToBase64String(ms.ToArray());
+			Properties.Settings.Default.Save();
+
+			nxtGame.Cookies = cookies;
+
+			frmMain_Shown(null, null);
+		}
 
         private void button1_Click(object sender, EventArgs e)
         {
-            EventHandler<LoadingStateChangedEventArgs> login = null;
-            login = new EventHandler<LoadingStateChangedEventArgs>((x, y) =>
-            {
-                if (!(y as LoadingStateChangedEventArgs).IsLoading)
-                {
-                    if (browser.browser.Address.Contains("http://www.nxtgame.com/"))
-                    {
-                        browser.browser.LoadingStateChanged -= login;
-                        Invoke(new XD(GetProfile));
-                        Invoke(new XD(browser.Hide));
-                    }
-                }
-            });
-            browser.browser.LoadingStateChanged += login;
-            browser.Show();
-            browser.browser.Load("http://www.nxtgame.com/auth");
-        }
+			browser = new frmBrowser("https://steamcommunity.com/openid/login?openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.mode=checkid_setup&openid.return_to=http%3A%2F%2Fwww.nxtgame.com%2Fauth&openid.realm=http%3A%2F%2Fwww.nxtgame.com&openid.ns.sreg=http%3A%2F%2Fopenid.net%2Fextensions%2Fsreg%2F1.1&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select");
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            timer1.Interval = 60000 * Properties.Settings.Default.AutoStartInterval;
-            timer1.Start();
-            EventHandler<LoadingStateChangedEventArgs> loading = null;
-            loading = new EventHandler<LoadingStateChangedEventArgs>(async (x, y) =>
-            {
-                if (!(y as LoadingStateChangedEventArgs).IsLoading)
-                    if (browser.browser.Address.Contains("http://www.nxtgame.com/?sports=0"))
-                    {
-                        browser.browser.LoadingStateChanged -= loading;
-                        if (!started)
-                        {
-                            started = true;
-                            await ParseMatch();
-                        }
-                    }
-            });
-            browser.browser.LoadingStateChanged += loading;
-            ParseItems();
-        }
+			browser.PageLoaded += new EventHandler<string>((object lSender, string lE) =>
+			{
+				if (lE.StartsWith("http://www.nxtgame.com"))
+				{
+					browser.GetCookies(CookiesCallback);
+				}
+			});
 
-        private void button4_Click(object sender, EventArgs e)
+			browser.ShowDialog();
+		}
+
+		private async void button2_Click(object sender, EventArgs e)
+		{
+			if (pictureBox1.Image != null)
+			{
+				button2.Enabled = false;
+
+				timer1.Interval = 60000 * Properties.Settings.Default.AutoStartInterval;
+				timer1.Start();
+
+				await nxtGame.GetMatches();
+				await nxtGame.PredictMatches();
+
+				button2.Enabled = true;
+			}
+		}
+
+		private void button4_Click(object sender, EventArgs e)
         {
             notifyIcon1.Visible = false;
             Process.GetCurrentProcess().Kill();
@@ -336,23 +142,24 @@ namespace NxtGameBot
 
         private void button3_Click(object sender, EventArgs e)
         {
-            //string remoteUri = "https://ci.appveyor.com/api/buildjobs/4akcm55elc60cg0t/artifacts/";
-            //string fileName = "NGB.zip", myStringWebResource = null;
-            //WebClient myWebClient = new WebClient();
-            //myStringWebResource = remoteUri + fileName;
-            //textBox1.AppendText( "Загрузка новой версии... " + Environment.NewLine );
-            //myWebClient.DownloadFile(myStringWebResource, fileName);
-            //textBox1.AppendText( "Загрузка завершена." + Environment.NewLine );
-        }
+			//string remoteUri = "https://ci.appveyor.com/api/buildjobs/4akcm55elc60cg0t/artifacts/";
+			//string fileName = "NGB.zip", myStringWebResource = null;
+			//WebClient myWebClient = new WebClient();
+			//myStringWebResource = remoteUri + fileName;
+			//textBox1.AppendText( "Загрузка новой версии... " + Environment.NewLine );
+			//myWebClient.DownloadFile(myStringWebResource, fileName);
+			//textBox1.AppendText( "Загрузка завершена." + Environment.NewLine );
+		}
 
-        private void button5_Click(object sender, EventArgs e)
+		private void button5_Click(object sender, EventArgs e)
         {
             setting.ShowDialog();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
-        {
-            button2.PerformClick();
+		{
+			frmMain_Shown(null, null);
+			button2.PerformClick();
         }
 
         private void notifyIcon1_MouseClick(object sender, MouseEventArgs e)
@@ -390,5 +197,5 @@ namespace NxtGameBot
                 ShowInTaskbar = true;
             }
         }
-    }
+	}
 }
