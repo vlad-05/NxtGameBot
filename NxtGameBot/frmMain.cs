@@ -80,6 +80,11 @@ namespace NxtGameBot
 					notifyIcon1.BalloonTipText = "Доступно вещей для вывода: " + i;
 					notifyIcon1.ShowBalloonTip(1000);
 				}
+
+				if (Properties.Settings.Default.AutoStart)
+				{
+					button2.PerformClick();
+				}
 			}
 		}
 

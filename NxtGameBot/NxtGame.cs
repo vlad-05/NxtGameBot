@@ -181,7 +181,7 @@ namespace NxtGameBot
 					}
 				}
 			}
-			WriteLog("N [" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] Предсказания сделаны.");
+			WriteLog("N [" + DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss") + "] Готово. Все прогнозы сделаны.");
 		}
 
 		private void WriteLog(string message)
@@ -223,7 +223,7 @@ namespace NxtGameBot
 				int status = (int)o["status"];
 				if (status == 2 && response.StartsWith("<span>Retry:"))
 				{
-					message += " -> Неудалось сделать предсказание, повторите через минуту.";
+					message += " -> Неудалось сделать прогрноз, повторите через минуту.";
 				}
 				else if (response == "This match has already started.")
 				{
