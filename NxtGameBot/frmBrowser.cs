@@ -26,7 +26,7 @@ namespace NxtGameBot
 			{
 				if (!Cef.Initialize(cefSettings))
 				{
-					throw new Exception("Ошибка инициализации браузера");
+					throw new Exception("Ошибка инициализации браузера.");
 				}
 			}
 

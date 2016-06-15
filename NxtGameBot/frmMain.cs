@@ -81,7 +81,7 @@ namespace NxtGameBot
 					notifyIcon1.ShowBalloonTip(1000);
 				}
 
-				if (Properties.Settings.Default.AutoStart)
+				if (Properties.Settings.Default.AutoStart && sender != timer1)
 				{
 					button2.PerformClick();
 				}
@@ -129,6 +129,7 @@ namespace NxtGameBot
 			{
 				button2.Enabled = false;
 
+				timer1.Stop();
 				timer1.Interval = 60000 * Properties.Settings.Default.AutoStartInterval;
 				timer1.Start();
 
@@ -163,7 +164,8 @@ namespace NxtGameBot
 
         private void timer1_Tick(object sender, EventArgs e)
 		{
-			frmMain_Shown(null, null);
+			timer1.Stop();
+			frmMain_Shown(timer1, null);
 			button2.PerformClick();
         }
 
